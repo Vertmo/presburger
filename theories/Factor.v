@@ -78,7 +78,7 @@ intros e1; case (factorVar0 e1); simpl in |- *.
 intros n e'1 H e2; case (factorVar0 e2); simpl in |- *.
 intros n0 e0 H0 p H1.
 inversion H1; auto with arith.
-apply GNPlus with (n := pred n1) (m := pred m); auto with arith.
+apply GNPlus with (n := pred n1) (m := pred m); auto; lia.
 Qed.
 
 (** Factor the variable of index 0 and decrement of 1 the other
@@ -161,10 +161,8 @@ apply
   with
     (nth 0 l 0 * Z_of_nat n + exp2Z (tail l) e1 +
      nth 0 l 0 * (0 - Z_of_nat n0))%Z.
-rewrite <- H3; ring.
-ring.
-rewrite H3; ring.
-apply minus_O_le; auto.
+1-3:lia.
+apply not_gt. intros GT. apply Nat.sub_gt in GT. auto.
 intros n1 H1; rewrite <- H1.
 rewrite H; rewrite H0; rewrite Znat.inj_minus1.
 split; intros H3.
@@ -173,10 +171,7 @@ apply
   with
     (nth 0 l 0 * Z_of_nat n0 + exp2Z (tail l) e2 +
      nth 0 l 0 * (0 - Z_of_nat n))%Z.
-rewrite H3; ring.
-ring.
-rewrite H3; ring.
-apply lt_le_weak; apply lt_O_minus_lt; rewrite H1; auto with arith.
+1-4:lia.
 intros i e e0; generalize (factorVar0_correct l e) (factorVar0_correct l e0);
  case (factorVar0 e); case (factorVar0 e0); simpl in |- *; 
  auto.
@@ -188,11 +183,10 @@ apply
  trans_equal
   with
     (nth 0 l 0 * Z_of_nat n + exp2Z (tail l) e1 + m1 * Z_of_nat i +
-     nth 0 l 0 * (0 - Z_of_nat n0))%Z; [ rewrite <- H3 | idtac ]; 
- ring.
-exists m1.
-rewrite H3; ring.
-apply minus_O_le; auto.
+     nth 0 l 0 * (0 - Z_of_nat n0))%Z; [ rewrite <- H3 | idtac ].
+1-2:lia.
+exists m1; lia.
+apply not_gt. intros GT. apply Nat.sub_gt in GT. auto.
 intros n1 H1; rewrite <- H1.
 rewrite H; rewrite H0; rewrite Znat.inj_minus1.
 split; intros (m1, H3).
@@ -201,11 +195,9 @@ apply
  trans_equal
   with
     (nth 0 l 0 * Z_of_nat n0 + exp2Z (tail l) e2 + - m1 * Z_of_nat i +
-     nth 0 l 0 * (0 - Z_of_nat n))%Z; [ rewrite H3 | idtac ]; 
- ring.
-exists (- m1)%Z.
-rewrite H3; ring.
-apply lt_le_weak; apply lt_O_minus_lt; rewrite H1; auto with arith.
+     nth 0 l 0 * (0 - Z_of_nat n))%Z; [ rewrite H3 | idtac ].
+1-2,4:lia.
+exists (- m1)%Z; lia.
 Qed.
  
 Theorem factorExp_groundN :
@@ -218,30 +210,30 @@ Theorem factorExp_groundN :
 intros e H; elim H; simpl in |- *; auto; clear H e.
 intros a1 b1 p; generalize (factorVar0_groundN a1); case (factorVar0 a1);
  generalize (factorVar0_groundN b1); case (factorVar0 b1).
-intros n e H n0 e0 H0; case (n0 - n); auto.
+intros n e H n0 e0 H0; case (n0 - n); simpl; auto.
 intros H1; inversion H1; auto.
-apply GNEq with (n := pred n1) (m := pred m); auto with arith.
+apply GNEq with (n := pred n1) (m := pred m); auto; lia.
 intros n1 H1.
 inversion H1; auto.
-apply GNEq with (n := pred m) (m := pred n2); auto with arith.
+apply GNEq with (n := pred m) (m := pred n2); auto; lia.
 intros a1 b1 p; generalize (factorVar0_groundN a1); case (factorVar0 a1);
  generalize (factorVar0_groundN b1); case (factorVar0 b1).
 intros n e H n0 e0 H0; case (n0 - n); auto.
 intros H1; inversion H1; auto.
 apply GNNeg.
 inversion H4.
-apply GNEq with (n := pred n2) (m := pred m); auto with arith.
+apply GNEq with (n := pred n2) (m := pred m); auto; lia.
 intros n1 H1.
 inversion H1; auto.
 apply GNNeg.
 inversion H4.
-apply GNEq with (n := pred m) (m := pred n3); auto with arith.
+apply GNEq with (n := pred m) (m := pred n3); auto; lia.
 intros i a1 b1 p; generalize (factorVar0_groundN a1); case (factorVar0 a1);
  generalize (factorVar0_groundN b1); case (factorVar0 b1).
 intros n e H n0 e0 H0; case (n0 - n); auto.
 intros H1; inversion H1; auto.
-apply GNCong with (n := pred n1) (m := pred m); auto with arith.
+apply GNCong with (n := pred n1) (m := pred m); auto; lia.
 intros n1 H1.
 inversion H1; auto.
-apply GNCong with (n := pred m) (m := pred n2); auto with arith.
+apply GNCong with (n := pred m) (m := pred n2); auto; lia.
 Qed.

@@ -20,10 +20,10 @@
 (*                                                                      *)
 (*    Laurent.Thery @sophia.inria.fr        March 2002                  *)
 (************************************************************************)
-Require Import List.
+From Stdlib Require Import List.
 Require Import Normal.
-Require Import Nat.
-Require Import ZArithRing.
+From Stdlib Require Import PeanoNat.
+From Stdlib Require Import ZArithRing.
 Require Import sTactic.
 Require Import Factor.
 Require Import GroundN.
@@ -136,10 +136,7 @@ cut
 simpl in |- *; intuition.
 apply iff_trans with (1 := H3); apply congZ_O_Eq.
 simpl in |- *; intuition; auto with arith.
-intros n H0 n0 H2 H3; absurd (n1 <= n2).
-apply lt_not_le.
-apply lt_O_minus_lt; rewrite H2; auto with arith.
-apply lt_le_weak; apply lt_O_minus_lt; rewrite H0; auto with arith.
+intros n H0 n0 H2 H3; absurd (n1 <= n2); lia.
 simpl in |- *.
 intros a b H0 H1 H2 H3.
 generalize H1 H3; clear H1 H3; case (sortAnd a).
@@ -204,15 +201,15 @@ intros l'2 p0; case p0; clear p0.
 intros l'3 l'4; auto.
 intros (Z1, (Z2, (Z3, Z4))) (Z'1, (Z'2, (Z'3, Z'4))); repeat split; auto.
 apply groundNL_app; auto.
-apply groundNL_le with (n := pred n0); auto with arith.
-apply groundNL_le with (n := pred m); auto with arith.
+apply groundNL_le with (n := pred n0); auto; lia.
+apply groundNL_le with (n := pred m); auto; lia.
 apply groundNL2_app; auto.
-apply groundNL2_le with (n := pred n0); auto with arith.
-apply groundNL2_le with (n := pred m); auto with arith.
+apply groundNL2_le with (n := pred n0); auto; lia.
+apply groundNL2_le with (n := pred m); auto; lia.
 apply groundNL2_app; auto.
-apply groundNL2_le with (n := pred n0); auto with arith.
-apply groundNL2_le with (n := pred m); auto with arith.
+apply groundNL2_le with (n := pred n0); auto; lia.
+apply groundNL2_le with (n := pred m); auto; lia.
 apply groundNL2_app; auto.
-apply groundNL2_le with (n := pred n0); auto with arith.
-apply groundNL2_le with (n := pred m); auto with arith.
+apply groundNL2_le with (n := pred n0); auto; lia.
+apply groundNL2_le with (n := pred m); auto; lia.
 Qed.

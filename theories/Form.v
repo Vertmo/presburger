@@ -22,14 +22,13 @@
 (************************************************************************)
 (** * Definition of the datastructure *)
 Require Export Cong.
-Require Export List.
-Require Export ZArith.
-Require Export Bool.
-Require Import ROmega.
-Require Export Classical_Prop.
+From Stdlib Require Export List.
+From Stdlib Require Export ZArith Lia.
+From Stdlib Require Export Bool.
+From Stdlib Require Export Classical_Prop.
 Require Import Zdivides.
-Require Import ZArithRing.
-Require Export Nat.
+From Stdlib Require Import ZArithRing.
+From Stdlib Require Export PeanoNat.
  
 (** Expresssion 
    - Numbers
@@ -306,9 +305,9 @@ Fixpoint shiftExp (th i o : nat) (a : exp) {struct a} : exp :=
   | Plus b c => Plus (shiftExp th i o b) (shiftExp th i o c)
   | Num n => Num n
   | Var n =>
-      match ltdec n th with
-      | true => Var (n + i)
-      | false => Var (n + o)
+      match lt_dec n th with
+      | left _ => Var (n + i)
+      | right _ => Var (n + o)
       end
   end.
  

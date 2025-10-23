@@ -21,10 +21,11 @@
 (*    Laurent.Thery @sophia.inria.fr        March 2002                  *)
 (************************************************************************)
 (** * Ground formulae *)
+
+From Stdlib Require Import PeanoNat.
 Require Import Form.
 Require Import sTactic.
-Require Import Nat.
- 
+
 (** Definition of  ground expression at level [n]:
       -no variable has index greater than [n]
 *)
@@ -41,7 +42,7 @@ Inductive groundNExp : nat -> exp -> Prop :=
 Fixpoint fgroundNExp (n : nat) (e : exp) {struct e} : bool :=
   match e with
   | Num _ => true
-  | Var i => ltdec i n
+  | Var i => if lt_dec i n then true else false
   | Plus a b =>
       match fgroundNExp n a with
       | true => fgroundNExp n b
@@ -154,8 +155,7 @@ Hint Resolve groundNL2_app.
 Theorem groundNExp_le :
  forall a n m, groundNExp n a -> n <= m -> groundNExp m a.
 intros a n m H; generalize m; elim H; clear H n m; simpl in |- *; auto.
-intros i n H m H0; apply GNVar.
-apply lt_le_trans with (1 := H); auto.
+intros i n H m H0; apply GNVar; try lia.
 intros a0 b n m p H H0 H1 H2 H3 H4 m0 H5.
 apply GNPlus with (n := p) (m := p); auto.
 Qed.
@@ -203,27 +203,20 @@ intros n a b H; elim b; simpl in |- *; auto.
 intros n0; case n0; auto.
 intros n1 H0; apply GNPlus with (n := n) (m := n); auto.
 Qed.
-Require Import Max.
- 
+
  
 Theorem shiftExp_groundN :
  forall n a th i o,
  groundNExp n a -> groundNExp (max (th + i) (n + o)) (shiftExp th i o a).
 intros n a th i o H; generalize th i o; elim H; simpl in |- *; auto.
-intros i0 n0 H0 th0 i1 o0; generalize (ltdec_correct i0 th0);
- case (ltdec i0 th0); auto.
-intros H1; apply groundNExp_le with (S (i0 + i1)); auto with arith.
-apply le_trans with (th0 + i1); auto with arith.
-intros H1; apply groundNExp_le with (S (i0 + o0)); auto with arith.
-apply le_trans with (n0 + o0); auto with arith.
+intros i0 n0 H0 th0 i1 o0.
+ case (lt_dec i0 th0); auto.
+intros H1; apply groundNExp_le with (S (i0 + i1)); auto with arith. lia.
+intros H1; apply groundNExp_le with (S (i0 + o0)); auto with arith. lia.
 intros a0 b n0 m p H0 H1 H2 H3 H4 H5 th0 i0 o0.
 apply
  GNPlus with (n := max (th0 + i0) (n0 + o0)) (m := max (th0 + i0) (m + o0));
- auto with arith.
-case (max_Or (th0 + i0) (n0 + o0)); intros H6; rewrite H6; auto with arith.
-apply le_trans with (p + o0); auto with arith.
-case (max_Or (th0 + i0) (m + o0)); intros H6; rewrite H6; auto with arith.
-apply le_trans with (p + o0); auto with arith.
+ auto with arith; lia.
 Qed.
  
 Theorem shiftForm_groundN :
@@ -285,7 +278,7 @@ Theorem fgrounNExp_correct :
  | false => ~ groundNExp n e
  end.
 intros n e; elim e; simpl in |- *; auto.
-intros i; generalize (ltdec_correct i n); case (ltdec i n); auto.
+intros i; case (lt_dec i n); auto.
 intros H; Contradict H; inversion H; auto with arith.
 intros e1; case (fgroundNExp n e1).
 intros H e2; case (fgroundNExp n e2); auto.

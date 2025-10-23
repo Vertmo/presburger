@@ -75,9 +75,8 @@ intros a H3; elim H3; simpl in |- *; auto.
 Qed.
 Hint Resolve lift_if1_prenex.
 Require Import GroundN.
-Require Import ArithRing.
-Require Import Max.
- 
+From Stdlib Require Import ArithRing.
+
 Theorem lift_if1_groundN :
  forall f1 f2 n m p,
  prenex f2 ->
@@ -93,16 +92,14 @@ replace (S (p + (m + n))) with (p + (S m + n)).
 apply H0; auto.
 replace (p + S m) with (S (p + m)).
 inversion H3; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
 intros a H H0 m p H2 H3.
 apply GNForall; auto.
 replace (S (p + (m + n))) with (p + (S m + n)).
 apply H0; auto.
 replace (p + S m) with (S (p + m)).
-inversion H3; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
+inversion H3; auto. 1,2:lia.
 intros a H; elim H; unfold lift_if1 in |- *; lazy beta in |- *;
  fold lift_if1 in |- *; auto; intros;
  apply GNImp with (n := p + (m + n)) (m := p + (m + n)); 
@@ -110,13 +107,11 @@ intros a H; elim H; unfold lift_if1 in |- *; lazy beta in |- *;
  try
   (replace (p + (m + n)) with (max (n + m) (p + n + m));
     [ apply shiftForm_groundN; auto
-    | replace (p + (m + n)) with (p + n + m); auto with arith; ring ]);
+    | lia]);
  try
   (replace (p + (m + n)) with (max (m + 0) (p + m + n));
-    [ apply shiftForm_groundN; auto; replace (p + (m + n)) with (m + (p + n));
-       auto with arith
-    | ring_simplify; rewrite plus_comm; auto with arith]);
- try (replace (p + m + n) with (m + (n + p)); auto with arith; try ring).
+    [ apply shiftForm_groundN; auto; replace (p + (m + n)) with (m + (p + n)); lia
+    | lia]).
 Qed.
  
 Theorem lift_if2_prenex :
@@ -148,9 +143,9 @@ apply H2; auto.
 replace (p + S n) with (S (p + n)); auto with arith.
 inversion H3; auto.
 intros a H; elim H; unfold lift_if2 in |- *; lazy beta in |- *;
- fold lift_if2 in |- *; auto; intros; replace (p + n) with (p + (0 + n));
- try apply lift_if1_groundN; auto with arith; rewrite plus_comm;
- simpl in |- *; auto.
+ fold lift_if2 in |- *; auto; intros; replace (p + n) with (p + (0 + n)); try lia;
+ try apply lift_if1_groundN; auto with arith; try lia.
+all:replace (p + 0) with p by lia; auto.
 Qed.
  
 Theorem lift_if_prenex :
@@ -165,9 +160,9 @@ Theorem lift_if_groundN :
  prenex f2 ->
  groundNForm p f1 -> groundNForm p f2 -> groundNForm p (lift_if f1 f2).
 intros f1 f2 p H H0 H1 H2; unfold lift_if in |- *.
-replace p with (p + 0); auto with arith.
-apply lift_if2_groundN; auto with arith; rewrite plus_comm; simpl in |- *;
- auto with arith.
+replace p with (p + 0); auto;
+  apply lift_if2_groundN; auto;
+  replace (p + 0) with p; auto; lia.
 Qed.
  
 Definition iso_list (th i o : nat) (l1 l2 : list Z) :=
@@ -180,8 +175,8 @@ Theorem iso_shiftExp :
  iso_list th i o l1 l2 ->
  forall e : exp, exp2Z l1 e = exp2Z l2 (shiftExp th i o e).
 intros l1 l2 th i o H e; elim e; simpl in |- *; auto.
-intros n; generalize (H n); generalize (ltdec_correct n th);
- case (ltdec n th); intros H1 H2; case H2; auto.
+intros n; generalize (H n);
+ case (lt_dec n th); intros H1 (?&?); simpl; auto; lia.
 intros e0 H0 e1 H1; rewrite H0; rewrite H1; auto.
 Qed.
 Hint Resolve iso_shiftExp.
@@ -210,7 +205,8 @@ Qed.
 Theorem iso_iso3_2 :
  forall l1 l2 l3 n m, iso_list3 n m l1 l2 l3 -> iso_list m 0 n l2 l3.
 intros l1 l2 l3 n m H; red in |- *; intros p.
-case (H p); intros H0 H1; rewrite plus_comm; simpl in |- *; intuition.
+case (H p); intros (?&?) ?; split; auto; try lia.
+replace (p + 0) with p by lia; intros; auto. now rewrite H0.
 Qed.
  
 Theorem iso3_1 :
@@ -219,7 +215,7 @@ Theorem iso3_1 :
 intros n m x l1 l2 l3 H; red in |- *; intros p; repeat split; try intros H1.
 generalize H1; clear H1; case p; simpl in |- *; auto.
 intros p' H1.
-cut (p' < m); [ intros H2 | apply lt_S_n; auto ].
+cut (p' < m); [ intros H2 | lia ].
 case (H p'); intros (H3, H4) H5; auto.
 generalize H1; clear H1; case p; simpl in |- *; auto.
 intros H1; inversion H1.
@@ -270,7 +266,7 @@ Theorem iso3_2 :
 intros n x l1 l2 l3 H; red in |- *; intros p; repeat split; try intros H1.
 inversion H1.
 replace (p + S n) with (S (p + n));
- [ simpl in |- * | repeat rewrite (plus_comm p); simpl in |- *; auto ].
+ [ simpl in |- * | repeat rewrite (Nat.add_comm p); simpl in |- *; auto ].
 case (H p); intros (H2, H3) H4; auto.
 case p; simpl in |- *; auto.
 intros p'; case (H p'); intros (H1, H2) H3; auto.
@@ -318,7 +314,7 @@ Theorem correct_lift_if :
  forall l : list Z,
  (form2Prop l f1 -> form2Prop l f2) <-> form2Prop l (lift_if f1 f2).
 intros f1 f2 H H0 l; unfold lift_if in |- *; apply iso_lift_i2; auto.
-red in |- *; repeat split; (repeat rewrite (plus_comm p); simpl in |- *);
+red in |- *; repeat split; (repeat rewrite (Nat.add_comm p); simpl in |- *);
  auto.
 Qed.
 
@@ -401,16 +397,16 @@ replace (S (p + (m + n))) with (p + (S m + n)).
 apply H0; auto.
 replace (p + S m) with (S (p + m)).
 inversion H3; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
 intros a H H0 m p H2 H3.
 apply GNForall; auto.
 replace (S (p + (m + n))) with (p + (S m + n)).
 apply H0; auto.
 replace (p + S m) with (S (p + m)).
 inversion H3; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
 intros a H; elim H; unfold lift_andor1 in |- *; lazy beta in |- *;
  fold lift_andor1 in |- *; auto; intros;
  apply GNAnd with (n := p + (m + n)) (m := p + (m + n)); 
@@ -423,8 +419,8 @@ intros a H; elim H; unfold lift_andor1 in |- *; lazy beta in |- *;
   (replace (p + (m + n)) with (max (m + 0) (p + m + n));
     [ apply shiftForm_groundN; auto; replace (p + (m + n)) with (m + (p + n));
        auto with arith
-    |  ring_simplify; rewrite plus_comm; auto with arith ]);
- try (replace (p + m + n) with (m + (n + p)); auto with arith; try ring).
+    |  ring_simplify; rewrite Nat.add_comm; auto with arith ]);
+ try (replace (p + m + n) with (m + (n + p)); auto with arith; try lia).
 Qed.
  
 Theorem lift_andor1_or_groundN :
@@ -443,16 +439,16 @@ replace (S (p + (m + n))) with (p + (S m + n)).
 apply H0; auto.
 replace (p + S m) with (S (p + m)).
 inversion H3; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
 intros a H H0 m p H2 H3.
 apply GNForall; auto.
 replace (S (p + (m + n))) with (p + (S m + n)).
 apply H0; auto.
 replace (p + S m) with (S (p + m)).
 inversion H3; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
-repeat rewrite (plus_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
+repeat rewrite (Nat.add_comm p); simpl in |- *; auto.
 intros a H; elim H; unfold lift_andor1 in |- *; lazy beta in |- *;
  fold lift_andor1 in |- *; auto; intros;
  apply GNOr with (n := p + (m + n)) (m := p + (m + n)); 
@@ -465,7 +461,7 @@ intros a H; elim H; unfold lift_andor1 in |- *; lazy beta in |- *;
   (replace (p + (m + n)) with (max (m + 0) (p + m + n));
     [ apply shiftForm_groundN; auto; replace (p + (m + n)) with (m + (p + n));
        auto with arith
-    |  ring_simplify; rewrite plus_comm; auto with arith ]);
+    |  ring_simplify; rewrite Nat.add_comm; auto with arith ]);
  try (replace (p + m + n) with (m + (n + p)); auto with arith; try ring).
 Qed.
  
@@ -492,7 +488,7 @@ inversion H3; auto.
 intros a H; elim H; unfold lift_andor2 in |- *; lazy beta in |- *;
  fold lift_andor2 in |- *; auto; intros; replace (p + n) with (p + (0 + n));
  try apply lift_andor1_and_groundN; auto with arith; 
- rewrite plus_comm; simpl in |- *; auto.
+ rewrite Nat.add_comm; simpl in |- *; auto.
 Qed.
  
 Theorem lift_andor2_or_groundN :
@@ -518,7 +514,7 @@ inversion H3; auto.
 intros a H; elim H; unfold lift_andor2 in |- *; lazy beta in |- *;
  fold lift_andor2 in |- *; auto; intros; replace (p + n) with (p + (0 + n));
  try apply lift_andor1_or_groundN; auto with arith; 
- rewrite plus_comm; simpl in |- *; auto.
+ rewrite Nat.add_comm; simpl in |- *; auto.
 Qed.
  
 Theorem lift_andor_and_groundN :
@@ -528,7 +524,7 @@ Theorem lift_andor_and_groundN :
  groundNForm p f1 -> groundNForm p f2 -> groundNForm p (lift_andor ANd f1 f2).
 intros f1 f2 p H H0 H1 H2; unfold lift_andor in |- *.
 replace p with (p + 0); auto with arith.
-apply lift_andor2_and_groundN; auto with arith; rewrite plus_comm;
+apply lift_andor2_and_groundN; auto with arith; rewrite Nat.add_comm;
  simpl in |- *; auto with arith.
 Qed.
  
@@ -539,7 +535,7 @@ Theorem lift_andor_or_groundN :
  groundNForm p f1 -> groundNForm p f2 -> groundNForm p (lift_andor Or f1 f2).
 intros f1 f2 p H H0 H1 H2; unfold lift_andor in |- *.
 replace p with (p + 0); auto with arith.
-apply lift_andor2_or_groundN; auto with arith; rewrite plus_comm;
+apply lift_andor2_or_groundN; auto with arith; rewrite Nat.add_comm;
  simpl in |- *; auto with arith.
 Qed.
  
@@ -674,7 +670,7 @@ Theorem correct_lift_andor_and :
  form2Prop l f1 /\ form2Prop l f2 <-> form2Prop l (lift_andor ANd f1 f2).
 intros f1 f2 H H0 l; unfold lift_andor in |- *; apply iso_lift_andor_and2;
  auto.
-red in |- *; repeat split; (repeat rewrite (plus_comm p); simpl in |- *);
+red in |- *; repeat split; (repeat rewrite (Nat.add_comm p); simpl in |- *);
  auto.
 Qed.
  
@@ -686,7 +682,7 @@ Theorem correct_lift_andor_or :
  form2Prop l f1 \/ form2Prop l f2 <-> form2Prop l (lift_andor Or f1 f2).
 intros f1 f2 H H0 l; unfold lift_andor in |- *; apply iso_lift_andor_or2;
  auto.
-red in |- *; repeat split; (repeat rewrite (plus_comm p); simpl in |- *);
+red in |- *; repeat split; (repeat rewrite (Nat.add_comm p); simpl in |- *);
  auto.
 Qed.
  

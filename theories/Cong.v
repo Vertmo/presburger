@@ -21,7 +21,7 @@
 (*    Laurent.Thery @sophia.inria.fr        March 2002                  *)
 (************************************************************************)
 (** * Congruence *)
-Require Export ZArith.
+From Stdlib Require Export ZArith Lia.
 Require Import Zdivides.
 Require Import sTactic.
 
@@ -36,8 +36,7 @@ intros; unfold Zminus in |- *; apply Zlt_left_lt; auto.
 Qed.
  
 Theorem lt_inj : forall a b : nat, (Z_of_nat a < Z_of_nat b)%Z -> a < b.
-intros a b H; case (le_or_lt b a); auto; intros H0.
-Contradict H; apply Zle_not_lt; apply Znat.inj_le; auto with zarith arith.
+intros a b H; lia.
 Qed.
  
 (** Definition of the congruence *)
@@ -116,12 +115,7 @@ apply trans_equal with (b + (a - b))%Z.
 ring.
 pattern (a - b)%Z at 1 in |- *; rewrite H1; ring_simplify;
   eapply Zplus_eq_compat; [reflexivity | simpl; apply POS_inject].
-case (le_or_lt (S n) (Z.abs_nat (Zpos p))); intros H4; auto.
-Contradict H3; simpl in |- *.
-apply Zle_not_lt.
-repeat rewrite POS_inject.
-rewrite nat_of_P_o_P_of_succ_nat_eq_succ; apply Znat.inj_le;
- auto with zarith arith.
+lia.
 intros p H1 (H2, H3); split; auto.
 exists (Zquotient (a - b) (Z_of_nat (S n)) - 1)%Z.
 apply trans_equal with (b + (a - b))%Z.

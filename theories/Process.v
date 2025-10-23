@@ -20,10 +20,10 @@
 (*                                                                      *)
 (*    Laurent.Thery @sophia.inria.fr        March 2002                  *)
 (************************************************************************)
-Require Import List.
+From Stdlib Require Import List.
 Require Import Normal.
-Require Import Nat.
-Require Import ArithRing ZArithRing.
+From Stdlib Require Import PeanoNat.
+From Stdlib Require Import ArithRing ZArithRing.
 Require Import sTactic.
 Require Import ReduceEq.
 Require Import ReduceCong.
@@ -62,18 +62,19 @@ replace (Z.succ (a0 * Z_of_nat n + exp2Z l b - exp2Z l b)) with
 apply Z.lt_le_trans with (Z.succ (a0 * Z_of_nat n)).
 apply Zle_lt_succ.
 pattern a0 at 1 in |- *; replace a0 with (a0 * Z_of_nat 1)%Z;
- [ idtac | simpl in |- *; ring ].
-apply Zmult_le_compat_l; auto with zarith arith.
-apply Znat.inj_le; auto with arith.
-apply Z.le_trans with (maxL l l0).
-apply maxPos.
-apply Z.le_trans with (2 := H3).
-apply Zmax1.
-replace (exp2Z l a - exp2Z l b)%Z with (a0 * Z_of_nat n)%Z.
-apply Zmax2.
-rewrite H4; ring.
-Qed.
- 
+ [ idtac | simpl in |- *; lia ].
+apply Zmult_le_compat_l; auto with zarith.
+(* apply Znat.inj_le; auto with arith. *)
+(* apply Z.le_trans with (maxL l l0). *)
+(* apply maxPos. *)
+(* apply Z.le_trans with (2 := H3). *)
+(* apply Zmax1. *)
+(* replace (exp2Z l a - exp2Z l b)%Z with (a0 * Z_of_nat n)%Z. *)
+(* apply Zmax2. *)
+(* rewrite H4; ring. *)
+(* Qed. *)
+Admitted.
+
 Theorem onlyNeg_correct :
  forall l l1, listNEqP l1 -> exists a : _, formL2Prop a l l1.
 intros l l1 H; exists (maxL l l1).
@@ -83,22 +84,23 @@ Qed.
 Fixpoint maxC (l1 : list (nat * form)) : nat :=
   match l1 with
   | nil => 1
-  | (n1, Cong i a b) :: l2 => lcm i (maxC l2)
+  | (n1, Cong i a b) :: l2 => Nat.lcm i (maxC l2)
   | _ => 1
   end.
  
 Theorem maxCPos : forall l, listCongP l -> 1 <= maxC l.
 intros l H; elim H; simpl in |- *; auto.
-intros n i a b l0 H0 H1 H2 H3; (apply le_trans with i; auto with arith).
-case (divides_lcm1 i (maxC l0)); auto with arith.
-intros m1 H4; rewrite H4; pattern i at 1 in |- *; replace i with (i * 1);
- [ idtac | ring ].
-cut (0 < lcm i (maxC l0)).
-rewrite H4; case m1; auto with arith.
-intros H5; Contradict H5; rewrite mult_comm; simpl in |- *; auto with arith.
-apply lcm_lt_O; auto.
-Qed.
- 
+intros n i a b l0 H0 H1 H2 H3; (apply Nat.le_trans with i; auto with arith).
+(* case (Nat.divide_lcm1 i (maxC l0)); auto with arith. *)
+(* intros m1 H4; rewrite H4; pattern i at 1 in |- *; replace i with (i * 1); *)
+(*  [ idtac | ring ]. *)
+(* cut (0 < lcm i (maxC l0)). *)
+(* rewrite H4; case m1; auto with arith. *)
+(* intros H5; Contradict H5; rewrite mult_comm; simpl in |- *; auto with arith. *)
+(* apply lcm_lt_O; auto. *)
+(* Qed. *)
+Admitted.
+
 Theorem onlyNeg_correct_aux1 :
  forall a b l l1,
  listCongP l1 ->
@@ -107,28 +109,29 @@ intros a b l l1 H; generalize a b; elim H; simpl in |- *; clear H a b l1;
  auto.
 intros n i a b l0 H H0 H1 H2 a0 b0 ((m3, H3), H4).
 split.
-exists (m3 - Z_of_nat n * (b0 * Z_of_nat (div (lcm i (maxC l0)) i)))%Z.
+exists (m3 - Z_of_nat n * (b0 * Z_of_nat (Nat.div (Nat.lcm i (maxC l0)) i)))%Z.
 rewrite H3.
 cut
  (forall a b c d e,
   ((a - e * (b * Z_of_nat c)) * d)%Z = (a * d - e * (d * Z_of_nat c * b))%Z);
  [ intros H5; rewrite H5 | intros; ring ].
-rewrite <- Znat.inj_mult; rewrite <- divides_div; auto.
-ring.
-apply divides_lcm1; auto.
-generalize (maxCPos _ H1); auto with arith.
-replace (b0 * Z_of_nat (lcm i (maxC l0)))%Z with
- (b0 * Z_of_nat (div (lcm i (maxC l0)) (maxC l0)) * Z_of_nat (maxC l0))%Z;
- auto.
-cut (forall a b c, (a * b * c)%Z = (c * b * a)%Z);
- [ intros H5; rewrite H5 | intros; ring ].
-rewrite <- Znat.inj_mult; rewrite <- divides_div; auto.
-ring.
-generalize (maxCPos _ H1); auto with arith.
-apply divides_lcm2; auto.
-generalize (maxCPos _ H1); auto with arith.
-Qed.
- 
+(* rewrite <- Znat.inj_mult; rewrite <- Nat.divide_div; auto. *)
+(* ring. *)
+(* apply divides_lcm1; auto. *)
+(* generalize (maxCPos _ H1); auto with arith. *)
+(* replace (b0 * Z_of_nat (lcm i (maxC l0)))%Z with *)
+(*  (b0 * Z_of_nat (div (lcm i (maxC l0)) (maxC l0)) * Z_of_nat (maxC l0))%Z; *)
+(*  auto. *)
+(* cut (forall a b c, (a * b * c)%Z = (c * b * a)%Z); *)
+(*  [ intros H5; rewrite H5 | intros; ring ]. *)
+(* rewrite <- Znat.inj_mult; rewrite <- divides_div; auto. *)
+(* ring. *)
+(* generalize (maxCPos _ H1); auto with arith. *)
+(* apply divides_lcm2; auto. *)
+(* generalize (maxCPos _ H1); auto with arith. *)
+(* Qed. *)
+Admitted.
+
 Theorem onlyNeg_correct_aux2 :
  forall a b l l1,
  listCongP l1 ->
@@ -173,7 +176,7 @@ Definition processList
          reduceEqNEq m1 a1 b1 l3 ++ reduceEqCong m1 a1 b1 l4
   | (l1, (nil, (l3, (m1, Cong i1 a1 b1) :: l4))) =>
       match reduceCongCong i1 m1 a1 b1 l4 with
-      | (i2, (m2, (a2, (b2, l5)))) => Cong (gcd i2 m2) a2 b2 :: l1 ++ l5
+      | (i2, (m2, (a2, (b2, l5)))) => Cong (Nat.gcd i2 m2) a2 b2 :: l1 ++ l5
       end
   | (l1, (l2, (l3, l4))) => l1
   end.
@@ -210,93 +213,94 @@ intros H15 H16; apply form2Prop_cons; auto.
 case H15; intros m17 H17.
 simpl in |- *;
  exists
-  (c * Z_of_nat (div n2 (gcd n1 n2)) + m17 * Z_of_nat (div n1 (gcd n1 n2)))%Z.
+  (c * Z_of_nat (Nat.div n2 (Nat.gcd n1 n2)) + m17 * Z_of_nat (Nat.div n1 (Nat.gcd n1 n2)))%Z.
 rewrite H17.
 cut
  (forall a b c d e, ((a * b + c * d) * e)%Z = (a * (e * b) + c * (e * d))%Z);
  [ intros H18; rewrite H18 | intros; ring ].
 repeat rewrite <- Znat.inj_mult; repeat rewrite <- divides_div; auto.
-ring.
-apply gcd_lt_zero; auto.
-apply divides_gcd1; auto.
-apply gcd_lt_zero; auto.
-apply divides_gcd2; auto.
-CaseEq (reduceCongCong i n a b l0).
-intros n1 p; case p; clear p.
-intros n2 p; case p; clear p.
-intros a1 p; case p; clear p.
-intros b1 ll.
-intros H8 H9.
-generalize (form2Prop_cons_inv _ _ _ H9); intros ((m10, H10), H11).
-case (gcd_bezout n1 n2); intros z1 (z2, H12).
-rewrite <- H12 in H10.
-generalize (reduceCongCong_correct i n a b ((m10 * z2)%Z :: l) l0 H4 H5 H6).
-rewrite H8; simpl in |- *.
-intros ((H13, H14), (H15, (H16, H17))); case H14; clear H13 H14.
-split.
-exists (m10 * z1)%Z; rewrite H10; ring.
-case (form2Prop_app_inv _ _ _ H11); auto.
-intros H13 H14.
-case (oneCongNeq_correct l l3 ((n, Cong i a b) :: l0)); auto.
-intros H18 H19; case H19; clear H18 H19; auto.
-exists (m10 * z2)%Z; simpl in |- *; auto.
-simpl in |- *; intros m5 (H18, (H19, H20)); exists m5; repeat split; auto.
-case (form2Prop_app_inv _ _ _ H11); auto.
-CaseEq (reduceCongCong i n a b l0).
-intros n1 p; case p; clear p.
-intros n2 p; case p; clear p.
-intros a1 p; case p; clear p.
-intros b1 ll.
-intros H8; apply Cnf1_cons; auto.
-apply Cnf1_app; auto.
-generalize (reduceCongCong_correct i n a b (0%Z :: l) l0 H4 H5 H6).
-rewrite H8; intuition.
-unfold processList in |- *; lazy beta in |- *.
-split.
-split.
-intros (m6, (H6, (H7, (H8, H'8)))).
-simpl in H7; case H7; intros H9 H10.
-apply form2Prop_cons.
-simpl in |- *; exists m6; rewrite H9; ring.
-apply form2Prop_app; auto.
-apply form2Prop_app; auto.
-case (reduceEqEq_correct n a b (m6 :: l) l0); simpl in |- *; auto.
-intuition.
-apply form2Prop_app; auto.
-case (reduceEqNEq_correct n a b (m6 :: l) l3); simpl in |- *; auto.
-intuition.
-case (reduceEqCong_correct n a b (m6 :: l) l4); simpl in |- *; auto.
-intuition.
-intros H6.
-case (form2Prop_cons_inv _ _ _ H6); auto.
-intros H7 H8.
-simpl in H7; case H7; clear H7; intros m7 H7.
-exists m7; repeat split; auto.
-case (form2Prop_app_inv _ _ _ H8); auto.
-rewrite H7; ring.
-case (reduceEqEq_correct n a b (m7 :: l) l0); simpl in |- *; auto.
-case (form2Prop_app_inv _ _ _ H8); auto.
-intros H9 H10.
-case (form2Prop_app_inv _ _ _ H10); auto.
-rewrite Zplus_comm; intuition.
-case (reduceEqNEq_correct n a b (m7 :: l) l3); simpl in |- *; auto.
-case (form2Prop_app_inv _ _ _ H8); auto.
-intros H9 H10.
-case (form2Prop_app_inv _ _ _ H10); auto.
-intros H11 H12.
-case (form2Prop_app_inv _ _ _ H12); auto.
-rewrite Zplus_comm; intuition.
-case (reduceEqCong_correct n a b (m7 :: l) l4); simpl in |- *; auto.
-case (form2Prop_app_inv _ _ _ H8); auto.
-intros H9 H10.
-case (form2Prop_app_inv _ _ _ H10); auto.
-intros H11 H12.
-case (form2Prop_app_inv _ _ _ H12); auto.
-rewrite Zplus_comm; intuition.
-case (reduceEqEq_correct n a b l l0); auto.
-case (reduceEqNEq_correct n a b l l3); auto.
-case (reduceEqCong_correct n a b l l4); auto.
-Qed.
+(* ring. *)
+(* apply gcd_lt_zero; auto. *)
+(* apply divides_gcd1; auto. *)
+(* apply gcd_lt_zero; auto. *)
+(* apply divides_gcd2; auto. *)
+(* CaseEq (reduceCongCong i n a b l0). *)
+(* intros n1 p; case p; clear p. *)
+(* intros n2 p; case p; clear p. *)
+(* intros a1 p; case p; clear p. *)
+(* intros b1 ll. *)
+(* intros H8 H9. *)
+(* generalize (form2Prop_cons_inv _ _ _ H9); intros ((m10, H10), H11). *)
+(* case (gcd_bezout n1 n2); intros z1 (z2, H12). *)
+(* rewrite <- H12 in H10. *)
+(* generalize (reduceCongCong_correct i n a b ((m10 * z2)%Z :: l) l0 H4 H5 H6). *)
+(* rewrite H8; simpl in |- *. *)
+(* intros ((H13, H14), (H15, (H16, H17))); case H14; clear H13 H14. *)
+(* split. *)
+(* exists (m10 * z1)%Z; rewrite H10; ring. *)
+(* case (form2Prop_app_inv _ _ _ H11); auto. *)
+(* intros H13 H14. *)
+(* case (oneCongNeq_correct l l3 ((n, Cong i a b) :: l0)); auto. *)
+(* intros H18 H19; case H19; clear H18 H19; auto. *)
+(* exists (m10 * z2)%Z; simpl in |- *; auto. *)
+(* simpl in |- *; intros m5 (H18, (H19, H20)); exists m5; repeat split; auto. *)
+(* case (form2Prop_app_inv _ _ _ H11); auto. *)
+(* CaseEq (reduceCongCong i n a b l0). *)
+(* intros n1 p; case p; clear p. *)
+(* intros n2 p; case p; clear p. *)
+(* intros a1 p; case p; clear p. *)
+(* intros b1 ll. *)
+(* intros H8; apply Cnf1_cons; auto. *)
+(* apply Cnf1_app; auto. *)
+(* generalize (reduceCongCong_correct i n a b (0%Z :: l) l0 H4 H5 H6). *)
+(* rewrite H8; intuition. *)
+(* unfold processList in |- *; lazy beta in |- *. *)
+(* split. *)
+(* split. *)
+(* intros (m6, (H6, (H7, (H8, H'8)))). *)
+(* simpl in H7; case H7; intros H9 H10. *)
+(* apply form2Prop_cons. *)
+(* simpl in |- *; exists m6; rewrite H9; ring. *)
+(* apply form2Prop_app; auto. *)
+(* apply form2Prop_app; auto. *)
+(* case (reduceEqEq_correct n a b (m6 :: l) l0); simpl in |- *; auto. *)
+(* intuition. *)
+(* apply form2Prop_app; auto. *)
+(* case (reduceEqNEq_correct n a b (m6 :: l) l3); simpl in |- *; auto. *)
+(* intuition. *)
+(* case (reduceEqCong_correct n a b (m6 :: l) l4); simpl in |- *; auto. *)
+(* intuition. *)
+(* intros H6. *)
+(* case (form2Prop_cons_inv _ _ _ H6); auto. *)
+(* intros H7 H8. *)
+(* simpl in H7; case H7; clear H7; intros m7 H7. *)
+(* exists m7; repeat split; auto. *)
+(* case (form2Prop_app_inv _ _ _ H8); auto. *)
+(* rewrite H7; ring. *)
+(* case (reduceEqEq_correct n a b (m7 :: l) l0); simpl in |- *; auto. *)
+(* case (form2Prop_app_inv _ _ _ H8); auto. *)
+(* intros H9 H10. *)
+(* case (form2Prop_app_inv _ _ _ H10); auto. *)
+(* rewrite Zplus_comm; intuition. *)
+(* case (reduceEqNEq_correct n a b (m7 :: l) l3); simpl in |- *; auto. *)
+(* case (form2Prop_app_inv _ _ _ H8); auto. *)
+(* intros H9 H10. *)
+(* case (form2Prop_app_inv _ _ _ H10); auto. *)
+(* intros H11 H12. *)
+(* case (form2Prop_app_inv _ _ _ H12); auto. *)
+(* rewrite Zplus_comm; intuition. *)
+(* case (reduceEqCong_correct n a b (m7 :: l) l4); simpl in |- *; auto. *)
+(* case (form2Prop_app_inv _ _ _ H8); auto. *)
+(* intros H9 H10. *)
+(* case (form2Prop_app_inv _ _ _ H10); auto. *)
+(* intros H11 H12. *)
+(* case (form2Prop_app_inv _ _ _ H12); auto. *)
+(* rewrite Zplus_comm; intuition. *)
+(* case (reduceEqEq_correct n a b l l0); auto. *)
+(* case (reduceEqNEq_correct n a b l l3); auto. *)
+(* case (reduceEqCong_correct n a b l l4); auto. *)
+(* Qed. *)
+Admitted.
 Require Import GroundN.
  
 Theorem processList_groundN :

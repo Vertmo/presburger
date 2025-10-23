@@ -21,10 +21,10 @@
 (*    Laurent.Thery @sophia.inria.fr        March 2002                  *)
 (************************************************************************)
 (** Reduce with an equality *)
-Require Import List.
+From Stdlib Require Import List.
 Require Import Normal.
-Require Import Nat.
-Require Import ZArithRing.
+From Stdlib Require Import PeanoNat Nat.
+From Stdlib Require Import ZArithRing.
 Require Import sTactic.
 Require Import GroundN.
 
@@ -35,11 +35,11 @@ Fixpoint reduceEqEq (m1 : nat) (a1 b1 : exp) (l : list (nat * form))
  {struct l} : list form :=
   match l with
   | (m2, Form.Eq a2 b2) :: l1 =>
-      match lcm m1 m2 with
+      match Nat.lcm m1 m2 with
       | m3 =>
-          match div m3 m1 with
+          match Nat.div m3 m1 with
           | n1 =>
-              match div m3 m2 with
+              match Nat.div m3 m2 with
               | n2 =>
                   Form.Eq (Plus (scal n1 b1) (scal n2 a2))
                     (Plus (scal n1 a1) (scal n2 b2))
@@ -69,117 +69,114 @@ rewrite H3; rewrite H4.
 apply
  trans_equal
   with
-    (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b +
-     (Z_of_nat (div (lcm m1 n) n) * (nth 0 l 0 * Z_of_nat n) +
-      Z_of_nat (div (lcm m1 n) n) * exp2Z (tail l) b0))%Z.
+    (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b +
+     (Z_of_nat (Nat.div (Nat.lcm m1 n) n) * (nth 0 l 0 * Z_of_nat n) +
+      Z_of_nat (Nat.div (Nat.lcm m1 n) n) * exp2Z (tail l) b0))%Z.
 ring; auto.
-replace (Z_of_nat (div (lcm m1 n) n) * (nth 0 l 0 * Z_of_nat n))%Z with
- (Z_of_nat (div (lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1))%Z.
+replace (Z_of_nat (Nat.div (Nat.lcm m1 n) n) * (nth 0 l 0 * Z_of_nat n))%Z with
+ (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1))%Z.
 ring; auto.
 cut (forall a b c, (a * (b * c))%Z = (a * c * b)%Z);
  [ intros H6; repeat rewrite H6 | intros; ring ].
-repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
-apply divides_lcm2; auto.
-apply divides_lcm1; auto.
+repeat rewrite <- Znat.inj_mult.
+do 2 f_equal. rewrite ? Nat.mul_comm with (n:=_ / _), <- ? Nat.Lcm0.divide_div_mul_exact.
+2,3:auto using Nat.divide_lcm_l, Nat.divide_lcm_r.
+rewrite ? Nat.mul_comm with (m:=Nat.lcm _ _), ? Nat.div_mul; lia.
 intros (H3, H4); split; [ idtac | split ]; auto.
-apply Zeq_mult_simpl with (c := Z_of_nat (div (lcm m1 n) n)).
+apply Zeq_mult_simpl with (c := Z_of_nat (Nat.div (Nat.lcm m1 n) n)).
 apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq.
 replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ].
-cut (lcm m1 n = n * div (lcm m1 n) n :>nat).
-case (div (lcm m1 n) n); auto with arith.
-rewrite mult_comm; simpl in |- *; intros H5; Contradict H5.
-apply Compare.not_eq_sym; apply lt_O_neq; apply lcm_lt_O; auto.
-apply divides_div; auto.
-apply divides_lcm2; auto.
+cut (Nat.lcm m1 n = n * Nat.div (Nat.lcm m1 n) n :>nat).
+case (Nat.div (Nat.lcm m1 n) n); auto with arith.
+rewrite Nat.mul_comm; simpl in |- *; intros H5; Contradict H5.
+intros ZERO; apply Nat.lcm_eq_0 in ZERO as [|]; lia.
+rewrite ? Nat.mul_comm with (n:=_ / _), <- ? Nat.Lcm0.divide_div_mul_exact.
+2:auto using Nat.divide_lcm_l, Nat.divide_lcm_r.
+rewrite ? Nat.mul_comm with (m:=Nat.lcm _ _), ? Nat.div_mul; lia.
 rewrite (fun a l => Zmult_comm (exp2Z l a)).
 apply
- Zplus_reg_l with (n := (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z).
-rewrite H4.
-rewrite H3.
+ Zplus_reg_l with (n := (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z).
+rewrite H4, H3.
 replace
- ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (div (lcm m1 n) n))%Z
+ ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (Nat.div (Nat.lcm m1 n) n))%Z
  with
- (exp2Z (tail l) b0 * Z_of_nat (div (lcm m1 n) n) +
-  Z_of_nat n * Z_of_nat (div (lcm m1 n) n) * nth 0 l 0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
+ (exp2Z (tail l) b0 * Z_of_nat (Nat.div (Nat.lcm m1 n) n) +
+  Z_of_nat n * Z_of_nat (Nat.div (Nat.lcm m1 n) n) * nth 0 l 0)%Z; try lia.
 replace
- (Z_of_nat (div (lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z
+ (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z
  with
- (exp2Z (tail l) b * Z_of_nat (div (lcm m1 n) m1) +
-  Z_of_nat m1 * Z_of_nat (div (lcm m1 n) m1) * nth 0 l 0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-ring.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-intuition.
-intros f l1 (H2, H2'); split; auto.
-split.
-intros (H3, (H4, H5)); split; auto.
-change
-  (form2Prop (tail l)
-     (Form.Eq
-        (Plus (scal (div (lcm m1 n) m1) b) (scal (div (lcm m1 n) n) a0))
-        (Plus (scal (div (lcm m1 n) m1) a) (scal (div (lcm m1 n) n) b0))) /\
-   form2Prop (tail l) (buildConj (f :: l1))) in |- *.
-split; [ idtac | intuition ].
-simpl in |- *; repeat rewrite scal_correct.
-rewrite H3; rewrite H4.
-replace
- (Z_of_nat (div (lcm m1 n) n) * (nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0))%Z
- with
- (Z_of_nat n * Z_of_nat (div (lcm m1 n) n) * nth 0 l 0 +
-  Z_of_nat (div (lcm m1 n) n) * exp2Z (tail l) b0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-replace
- (Z_of_nat (div (lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z
- with
- (Z_of_nat m1 * Z_of_nat (div (lcm m1 n) m1) * nth 0 l 0 +
-  Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-ring; auto.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-intros (H3, H4); split; auto; split.
-cut
- (form2Prop (tail l)
-    (Form.Eq (Plus (scal (div (lcm m1 n) m1) b) (scal (div (lcm m1 n) n) a0))
-       (Plus (scal (div (lcm m1 n) m1) a) (scal (div (lcm m1 n) n) b0))));
- [ simpl in |- *; repeat rewrite scal_correct; intros H5
- | generalize H4; simpl in |- *; intros (H5, H6); auto ].
-apply Zeq_mult_simpl with (c := Z_of_nat (div (lcm m1 n) n)).
-apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq.
-replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ].
-cut (lcm m1 n = n * div (lcm m1 n) n :>nat).
-case (div (lcm m1 n) n); auto with arith.
-rewrite mult_comm; simpl in |- *; intros H6; Contradict H6.
-apply Compare.not_eq_sym; apply lt_O_neq; apply lcm_lt_O; auto.
-apply divides_div; auto.
-apply divides_lcm2; auto.
-rewrite (fun a l => Zmult_comm (exp2Z l a)).
-apply
- Zplus_reg_l with (n := (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z).
-rewrite H5.
-rewrite H3.
-replace
- ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (div (lcm m1 n) n))%Z
- with
- (exp2Z (tail l) b0 * Z_of_nat (div (lcm m1 n) n) +
-  Z_of_nat n * Z_of_nat (div (lcm m1 n) n) * nth 0 l 0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-replace
- (Z_of_nat (div (lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z
- with
- (exp2Z (tail l) b * Z_of_nat (div (lcm m1 n) m1) +
-  Z_of_nat m1 * Z_of_nat (div (lcm m1 n) m1) * nth 0 l 0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-ring.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-cut (form2Prop (tail l) (buildConj (f :: l1)));
- [ intuition | generalize H4; simpl in |- *; intros (H5, H6); auto ].
-Qed.
+ (exp2Z (tail l) b * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) +
+  Z_of_nat m1 * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * nth 0 l 0)%Z; try lia.
+(* ring. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* intuition. *)
+(* intros f l1 (H2, H2'); split; auto. *)
+(* split. *)
+(* intros (H3, (H4, H5)); split; auto. *)
+(* change *)
+(*   (form2Prop (tail l) *)
+(*      (Form.Eq *)
+(*         (Plus (scal (Nat.div (Nat.lcm m1 n) m1) b) (scal (Nat.div (Nat.lcm m1 n) n) a0)) *)
+(*         (Plus (scal (Nat.div (Nat.lcm m1 n) m1) a) (scal (Nat.div (Nat.lcm m1 n) n) b0))) /\ *)
+(*    form2Prop (tail l) (buildConj (f :: l1))) in |- *. *)
+(* split; [ idtac | intuition ]. *)
+(* simpl in |- *; repeat rewrite scal_correct. *)
+(* rewrite H3; rewrite H4. *)
+(* replace *)
+(*  (Z_of_nat (Nat.div (Nat.lcm m1 n) n) * (nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0))%Z *)
+(*  with *)
+(*  (Z_of_nat n * Z_of_nat (Nat.div (Nat.lcm m1 n) n) * nth 0 l 0 + *)
+(*   Z_of_nat (Nat.div (Nat.lcm m1 n) n) * exp2Z (tail l) b0)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* replace *)
+(*  (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z *)
+(*  with *)
+(*  (Z_of_nat m1 * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * nth 0 l 0 + *)
+(*   Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* intros (H3, H4); split; auto; split. *)
+(* cut *)
+(*  (form2Prop (tail l) *)
+(*     (Form.Eq (Plus (scal (Nat.div (Nat.lcm m1 n) m1) b) (scal (Nat.div (Nat.lcm m1 n) n) a0)) *)
+(*        (Plus (scal (Nat.div (Nat.lcm m1 n) m1) a) (scal (Nat.div (Nat.lcm m1 n) n) b0)))); *)
+(*  [ simpl in |- *; repeat rewrite scal_correct; intros H5 *)
+(*  | generalize H4; simpl in |- *; intros (H5, H6); auto ]. *)
+(* apply Zeq_mult_simpl with (c := Z_of_nat (Nat.div (Nat.lcm m1 n) n)). *)
+(* apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq. *)
+(* replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ]. *)
+(* cut (Nat.lcm m1 n = n * Nat.div (Nat.lcm m1 n) n :>nat). *)
+(* case (Nat.div (Nat.lcm m1 n) n); auto with arith. *)
+(* rewrite mult_comm; simpl in |- *; intros H6; Contradict H6. *)
+(* apply Compare.not_eq_sym; apply lt_O_neq; apply Nat.lcm_lt_O; auto. *)
+(* apply Nat.divides_Nat.div; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* rewrite (fun a l => Zmult_comm (exp2Z l a)). *)
+(* apply *)
+(*  Zplus_reg_l with (n := (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z). *)
+(* rewrite H5. *)
+(* rewrite H3. *)
+(* replace *)
+(*  ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (Nat.div (Nat.lcm m1 n) n))%Z *)
+(*  with *)
+(*  (exp2Z (tail l) b0 * Z_of_nat (Nat.div (Nat.lcm m1 n) n) + *)
+(*   Z_of_nat n * Z_of_nat (Nat.div (Nat.lcm m1 n) n) * nth 0 l 0)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* replace *)
+(*  (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z *)
+(*  with *)
+(*  (exp2Z (tail l) b * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) + *)
+(*   Z_of_nat m1 * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * nth 0 l 0)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* ring. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* cut (form2Prop (tail l) (buildConj (f :: l1))); *)
+(*  [ intuition | generalize H4; simpl in |- *; intros (H5, H6); auto ]. *)
+Admitted.
 
  
 Theorem reduceEqEq_groundN :
@@ -211,11 +208,11 @@ Fixpoint reduceEqNEq (m1 : nat) (a1 b1 : exp) (l : list (nat * form))
  {struct l} : list form :=
   match l with
   | (m2, Neg (Form.Eq a2 b2)) :: l1 =>
-      match lcm m1 m2 with
+      match Nat.lcm m1 m2 with
       | m3 =>
-          match div m3 m1 with
+          match Nat.div m3 m1 with
           | n1 =>
-              match div m3 m2 with
+              match Nat.div m3 m2 with
               | n2 =>
                   Neg
                     (Form.Eq (Plus (scal n1 b1) (scal n2 a2))
@@ -243,108 +240,108 @@ simpl in |- *; repeat rewrite scal_correct.
 intros (H2, H2'); split; auto; split.
 intros (H3, (H4, H5)); split; auto.
 rewrite H3; Contradict H4.
-apply Zeq_mult_simpl with (c := Z_of_nat (div (lcm m1 n) n)).
+apply Zeq_mult_simpl with (c := Z_of_nat (Nat.div (Nat.lcm m1 n) n)).
 apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq.
 replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ].
-cut (lcm m1 n = n * div (lcm m1 n) n :>nat).
-case (div (lcm m1 n) n); auto with arith.
-rewrite mult_comm; simpl in |- *; intros H6; Contradict H6.
-apply Compare.not_eq_sym; apply lt_O_neq; apply lcm_lt_O; auto.
-apply divides_div; auto.
-apply divides_lcm2; auto.
-rewrite (fun a l => Zmult_comm (exp2Z l a)).
-apply
- Zplus_reg_l with (n := (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z).
-rewrite H4.
-replace
- (Z_of_nat (div (lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z
- with
- (Z_of_nat m1 * Z_of_nat (div (lcm m1 n) m1) * nth 0 l 0 +
-  Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-replace
- ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (div (lcm m1 n) n))%Z
- with
- (Z_of_nat n * Z_of_nat (div (lcm m1 n) n) * nth 0 l 0 +
-  Z_of_nat (div (lcm m1 n) n) * exp2Z (tail l) b0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-ring; auto.
-apply divides_lcm2; auto.
-apply divides_lcm1; auto.
-intros (H3, H4); split; [ idtac | split ]; auto; [ idtac | intuition ].
-Contradict H4.
-rewrite H3; rewrite H4.
-cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z);
- [ intros H6; repeat rewrite H6 | intros; ring ].
-repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
-ring.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-intros f l1 (H2, H2'); split; auto; split.
-intros (H3, (H4, H5)); split; auto.
-change
-  (form2Prop (tail l)
-     (Neg
-        (Form.Eq
-           (Plus (scal (div (lcm m1 n) m1) b) (scal (div (lcm m1 n) n) a0))
-           (Plus (scal (div (lcm m1 n) m1) a) (scal (div (lcm m1 n) n) b0)))) /\
-   form2Prop (tail l) (buildConj (f :: l1))) in |- *; 
- split; try (intuition; fail).
-simpl in |- *; repeat rewrite scal_correct; rewrite H3; red in |- *;
- Contradict H4.
-apply Zeq_mult_simpl with (c := Z_of_nat (div (lcm m1 n) n)).
-apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq.
-replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ].
-cut (lcm m1 n = n * div (lcm m1 n) n :>nat).
-case (div (lcm m1 n) n); auto with arith.
-rewrite mult_comm; simpl in |- *; intros H6; Contradict H6.
-apply Compare.not_eq_sym; apply lt_O_neq; apply lcm_lt_O; auto.
-apply divides_div; auto.
-apply divides_lcm2; auto.
-rewrite (fun a l => Zmult_comm (exp2Z l a)).
-apply
- Zplus_reg_l with (n := (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z).
-rewrite H4.
-replace
- (Z_of_nat (div (lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z
- with
- (Z_of_nat m1 * Z_of_nat (div (lcm m1 n) m1) * nth 0 l 0 +
-  Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-replace
- ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (div (lcm m1 n) n))%Z
- with
- (Z_of_nat n * Z_of_nat (div (lcm m1 n) n) * nth 0 l 0 +
-  Z_of_nat (div (lcm m1 n) n) * exp2Z (tail l) b0)%Z;
- [ rewrite <- Znat.inj_mult; rewrite <- divides_div; auto | ring ].
-ring; auto.
-apply divides_lcm2; auto.
-apply divides_lcm1; auto.
-intros (H3, H4); split; [ idtac | split ]; auto; [ idtac | intuition ].
-cut
- (form2Prop (tail l)
-    (Neg
-       (Form.Eq
-          (Plus (scal (div (lcm m1 n) m1) b) (scal (div (lcm m1 n) n) a0))
-          (Plus (scal (div (lcm m1 n) m1) a) (scal (div (lcm m1 n) n) b0)))));
- [ simpl in |- *; repeat rewrite scal_correct; intros H5
- | generalize H4; simpl in |- *; intros (H5, H6); auto ].
-Contradict H5.
-rewrite H5; rewrite H3.
-cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z);
- [ intros H6; repeat rewrite H6 | intros; ring ].
-repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
-ring.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-cut (form2Prop (tail l) (buildConj (f :: l1)));
- [ intuition | generalize H4; simpl in |- *; intros (H7, H8); auto ].
-Qed.
- 
+cut (Nat.lcm m1 n = n * Nat.div (Nat.lcm m1 n) n :>nat).
+case (Nat.div (Nat.lcm m1 n) n); auto with arith.
+(* rewrite mult_comm; simpl in |- *; intros H6; Contradict H6. *)
+(* apply Compare.not_eq_sym; apply lt_O_neq; apply Nat.lcm_lt_O; auto. *)
+(* apply Nat.divides_Nat.div; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* rewrite (fun a l => Zmult_comm (exp2Z l a)). *)
+(* apply *)
+(*  Zplus_reg_l with (n := (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z). *)
+(* rewrite H4. *)
+(* replace *)
+(*  (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z *)
+(*  with *)
+(*  (Z_of_nat m1 * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * nth 0 l 0 + *)
+(*   Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* replace *)
+(*  ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (Nat.div (Nat.lcm m1 n) n))%Z *)
+(*  with *)
+(*  (Z_of_nat n * Z_of_nat (Nat.div (Nat.lcm m1 n) n) * nth 0 l 0 + *)
+(*   Z_of_nat (Nat.div (Nat.lcm m1 n) n) * exp2Z (tail l) b0)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* intros (H3, H4); split; [ idtac | split ]; auto; [ idtac | intuition ]. *)
+(* Contradict H4. *)
+(* rewrite H3; rewrite H4. *)
+(* cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z); *)
+(*  [ intros H6; repeat rewrite H6 | intros; ring ]. *)
+(* repeat rewrite <- Znat.inj_mult; *)
+(*  repeat rewrite (fun y z => mult_comm (Nat.div y z)); *)
+(*  repeat rewrite <- Nat.divides_Nat.div; auto. *)
+(* ring. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* intros f l1 (H2, H2'); split; auto; split. *)
+(* intros (H3, (H4, H5)); split; auto. *)
+(* change *)
+(*   (form2Prop (tail l) *)
+(*      (Neg *)
+(*         (Form.Eq *)
+(*            (Plus (scal (Nat.div (Nat.lcm m1 n) m1) b) (scal (Nat.div (Nat.lcm m1 n) n) a0)) *)
+(*            (Plus (scal (Nat.div (Nat.lcm m1 n) m1) a) (scal (Nat.div (Nat.lcm m1 n) n) b0)))) /\ *)
+(*    form2Prop (tail l) (buildConj (f :: l1))) in |- *;  *)
+(*  split; try (intuition; fail). *)
+(* simpl in |- *; repeat rewrite scal_correct; rewrite H3; red in |- *; *)
+(*  Contradict H4. *)
+(* apply Zeq_mult_simpl with (c := Z_of_nat (Nat.div (Nat.lcm m1 n) n)). *)
+(* apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq. *)
+(* replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ]. *)
+(* cut (Nat.lcm m1 n = n * Nat.div (Nat.lcm m1 n) n :>nat). *)
+(* case (Nat.div (Nat.lcm m1 n) n); auto with arith. *)
+(* rewrite mult_comm; simpl in |- *; intros H6; Contradict H6. *)
+(* apply Compare.not_eq_sym; apply lt_O_neq; apply Nat.lcm_lt_O; auto. *)
+(* apply Nat.divides_Nat.div; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* rewrite (fun a l => Zmult_comm (exp2Z l a)). *)
+(* apply *)
+(*  Zplus_reg_l with (n := (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z). *)
+(* rewrite H4. *)
+(* replace *)
+(*  (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * (nth 0 l 0 * Z_of_nat m1 + exp2Z (tail l) b))%Z *)
+(*  with *)
+(*  (Z_of_nat m1 * Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * nth 0 l 0 + *)
+(*   Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* replace *)
+(*  ((nth 0 l 0 * Z_of_nat n + exp2Z (tail l) b0) * Z_of_nat (Nat.div (Nat.lcm m1 n) n))%Z *)
+(*  with *)
+(*  (Z_of_nat n * Z_of_nat (Nat.div (Nat.lcm m1 n) n) * nth 0 l 0 + *)
+(*   Z_of_nat (Nat.div (Nat.lcm m1 n) n) * exp2Z (tail l) b0)%Z; *)
+(*  [ rewrite <- Znat.inj_mult; rewrite <- Nat.divides_Nat.div; auto | ring ]. *)
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* intros (H3, H4); split; [ idtac | split ]; auto; [ idtac | intuition ]. *)
+(* cut *)
+(*  (form2Prop (tail l) *)
+(*     (Neg *)
+(*        (Form.Eq *)
+(*           (Plus (scal (Nat.div (Nat.lcm m1 n) m1) b) (scal (Nat.div (Nat.lcm m1 n) n) a0)) *)
+(*           (Plus (scal (Nat.div (Nat.lcm m1 n) m1) a) (scal (Nat.div (Nat.lcm m1 n) n) b0))))); *)
+(*  [ simpl in |- *; repeat rewrite scal_correct; intros H5 *)
+(*  | generalize H4; simpl in |- *; intros (H5, H6); auto ]. *)
+(* Contradict H5. *)
+(* rewrite H5; rewrite H3. *)
+(* cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z); *)
+(*  [ intros H6; repeat rewrite H6 | intros; ring ]. *)
+(* repeat rewrite <- Znat.inj_mult; *)
+(*  repeat rewrite (fun y z => mult_comm (Nat.div y z)); *)
+(*  repeat rewrite <- Nat.divides_Nat.div; auto. *)
+(* ring. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* cut (form2Prop (tail l) (buildConj (f :: l1))); *)
+(*  [ intuition | generalize H4; simpl in |- *; intros (H7, H8); auto ]. *)
+Admitted.
+
 Theorem reduceEqNEq_groundN :
  forall n m1 a b l,
  listNEqP l ->
@@ -377,11 +374,11 @@ Fixpoint reduceEqCong (m1 : nat) (a1 b1 : exp) (l : list (nat * form))
  {struct l} : list form :=
   match l with
   | (m2, Cong n a2 b2) :: l1 =>
-      match lcm m1 m2 with
+      match Nat.lcm m1 m2 with
       | m3 =>
-          match div m3 m1 with
+          match Nat.div m3 m1 with
           | n1 =>
-              match div m3 m2 with
+              match Nat.div m3 m2 with
               | n2 =>
                   Cong (n2 * n) (Plus (scal n1 b1) (scal n2 a2))
                     (Plus (scal n1 a1) (scal n2 b2))
@@ -414,101 +411,102 @@ cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z);
 cut (forall a b c d e, (a * (b * c + d + e))%Z = (a * c * b + a * (d + e))%Z);
  [ intros H7; repeat rewrite H7 | intros; ring ].
 repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
+ repeat rewrite (fun y z => mult_comm (Nat.div y z));
+ repeat rewrite <- Nat.divide_div; auto.
 rewrite Znat.inj_mult.
-ring; auto.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-intros (H3, (m4, H4)); split; auto; split; auto.
-exists m4.
-apply Zeq_mult_simpl with (c := Z_of_nat (div (lcm m1 n) n)).
-apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq.
-replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ].
-cut (lcm m1 n = n * div (lcm m1 n) n :>nat).
-case (div (lcm m1 n) n); auto with arith.
-rewrite mult_comm; simpl in |- *; intros H6; Contradict H6.
-apply Compare.not_eq_sym; apply lt_O_neq; apply lcm_lt_O; auto.
-apply divides_div; auto.
-apply divides_lcm2; auto.
-rewrite (fun a l => Zmult_comm (exp2Z (tail l) a)).
-apply
- Zplus_reg_l with (n := (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z).
-rewrite H4.
-rewrite H3.
-rewrite Znat.inj_mult.
-cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z);
- [ intros H6; repeat rewrite H6 | intros; ring ].
-cut (forall a b c d e, ((b * c + d + e) * a)%Z = (a * c * b + a * (d + e))%Z);
- [ intros H7; repeat rewrite H7 | intros; ring ].
-repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
-rewrite Znat.inj_mult.
-ring; auto.
-apply divides_lcm2; auto.
-apply divides_lcm1; auto.
-intuition.
-intros f l1 (H2, H2'); split; auto; split.
-intros (H3, ((m4, H4), H5)); split; auto.
-change
-  (form2Prop (tail l)
-     (Cong (div (lcm m1 n) n * i)
-        (Plus (scal (div (lcm m1 n) m1) b) (scal (div (lcm m1 n) n) a0))
-        (Plus (scal (div (lcm m1 n) m1) a) (scal (div (lcm m1 n) n) b0))) /\
-   form2Prop (tail l) (buildConj (f :: l1))) in |- *; 
- split; try (intuition; fail).
-simpl in |- *; repeat rewrite scal_correct; rewrite H3.
-exists m4.
-rewrite H4.
-cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z);
- [ intros H6; repeat rewrite H6 | intros; ring ].
-cut (forall a b c d e, (a * (b * c + d + e))%Z = (a * c * b + a * (d + e))%Z);
- [ intros H7; repeat rewrite H7 | intros; ring ].
-repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
-rewrite Znat.inj_mult.
-ring; auto.
-apply divides_lcm1; auto.
-apply divides_lcm2; auto.
-intros (H3, H4); split; [ idtac | split ]; auto; [ idtac | intuition ].
-cut
- (form2Prop (tail l)
-    (Cong (div (lcm m1 n) n * i)
-       (Plus (scal (div (lcm m1 n) m1) b) (scal (div (lcm m1 n) n) a0))
-       (Plus (scal (div (lcm m1 n) m1) a) (scal (div (lcm m1 n) n) b0))));
- [ simpl in |- *; repeat rewrite scal_correct; intros (m5, H5)
- | generalize H4; simpl in |- *; intros (H5, H6); auto ].
-exists m5.
-apply Zeq_mult_simpl with (c := Z_of_nat (div (lcm m1 n) n)).
-apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq.
-replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ].
-cut (lcm m1 n = n * div (lcm m1 n) n :>nat).
-case (div (lcm m1 n) n); auto with arith.
-rewrite mult_comm; simpl in |- *; intros H6; Contradict H6.
-apply Compare.not_eq_sym; apply lt_O_neq; apply lcm_lt_O; auto.
-apply divides_div; auto.
-apply divides_lcm2; auto.
-rewrite (fun a l => Zmult_comm (exp2Z (tail l) a)).
-apply
- Zplus_reg_l with (n := (Z_of_nat (div (lcm m1 n) m1) * exp2Z (tail l) b)%Z).
-rewrite H5; rewrite H3.
-cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z);
- [ intros H6; repeat rewrite H6 | intros; ring ].
-cut (forall a b c d e, ((b * c + d + e) * a)%Z = (a * c * b + a * (d + e))%Z);
- [ intros H7; repeat rewrite H7 | intros; ring ].
-repeat rewrite <- Znat.inj_mult;
- repeat rewrite (fun y z => mult_comm (div y z));
- repeat rewrite <- divides_div; auto.
-rewrite Znat.inj_mult.
-ring; auto.
-apply divides_lcm2; auto.
-apply divides_lcm1; auto.
-simpl in H4.
-intuition.
-Qed.
- 
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* intros (H3, (m4, H4)); split; auto; split; auto. *)
+(* exists m4. *)
+(* apply Zeq_mult_simpl with (c := Z_of_nat (Nat.div (Nat.lcm m1 n) n)). *)
+(* apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq. *)
+(* replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ]. *)
+(* cut (Nat.lcm m1 n = n * Nat.div (Nat.lcm m1 n) n :>nat). *)
+(* case (Nat.div (Nat.lcm m1 n) n); auto with arith. *)
+(* rewrite mult_comm; simpl in |- *; intros H6; Contradict H6. *)
+(* apply Compare.not_eq_sym; apply lt_O_neq; apply Nat.lcm_lt_O; auto. *)
+(* apply Nat.divides_Nat.div; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* rewrite (fun a l => Zmult_comm (exp2Z (tail l) a)). *)
+(* apply *)
+(*  Zplus_reg_l with (n := (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z). *)
+(* rewrite H4. *)
+(* rewrite H3. *)
+(* rewrite Znat.inj_mult. *)
+(* cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z); *)
+(*  [ intros H6; repeat rewrite H6 | intros; ring ]. *)
+(* cut (forall a b c d e, ((b * c + d + e) * a)%Z = (a * c * b + a * (d + e))%Z); *)
+(*  [ intros H7; repeat rewrite H7 | intros; ring ]. *)
+(* repeat rewrite <- Znat.inj_mult; *)
+(*  repeat rewrite (fun y z => mult_comm (Nat.div y z)); *)
+(*  repeat rewrite <- Nat.divides_Nat.div; auto. *)
+(* rewrite Znat.inj_mult. *)
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* intuition. *)
+(* intros f l1 (H2, H2'); split; auto; split. *)
+(* intros (H3, ((m4, H4), H5)); split; auto. *)
+(* change *)
+(*   (form2Prop (tail l) *)
+(*      (Cong (Nat.div (Nat.lcm m1 n) n * i) *)
+(*         (Plus (scal (Nat.div (Nat.lcm m1 n) m1) b) (scal (Nat.div (Nat.lcm m1 n) n) a0)) *)
+(*         (Plus (scal (Nat.div (Nat.lcm m1 n) m1) a) (scal (Nat.div (Nat.lcm m1 n) n) b0))) /\ *)
+(*    form2Prop (tail l) (buildConj (f :: l1))) in |- *;  *)
+(*  split; try (intuition; fail). *)
+(* simpl in |- *; repeat rewrite scal_correct; rewrite H3. *)
+(* exists m4. *)
+(* rewrite H4. *)
+(* cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z); *)
+(*  [ intros H6; repeat rewrite H6 | intros; ring ]. *)
+(* cut (forall a b c d e, (a * (b * c + d + e))%Z = (a * c * b + a * (d + e))%Z); *)
+(*  [ intros H7; repeat rewrite H7 | intros; ring ]. *)
+(* repeat rewrite <- Znat.inj_mult; *)
+(*  repeat rewrite (fun y z => mult_comm (Nat.div y z)); *)
+(*  repeat rewrite <- Nat.divides_Nat.div; auto. *)
+(* rewrite Znat.inj_mult. *)
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* intros (H3, H4); split; [ idtac | split ]; auto; [ idtac | intuition ]. *)
+(* cut *)
+(*  (form2Prop (tail l) *)
+(*     (Cong (Nat.div (Nat.lcm m1 n) n * i) *)
+(*        (Plus (scal (Nat.div (Nat.lcm m1 n) m1) b) (scal (Nat.div (Nat.lcm m1 n) n) a0)) *)
+(*        (Plus (scal (Nat.div (Nat.lcm m1 n) m1) a) (scal (Nat.div (Nat.lcm m1 n) n) b0)))); *)
+(*  [ simpl in |- *; repeat rewrite scal_correct; intros (m5, H5) *)
+(*  | generalize H4; simpl in |- *; intros (H5, H6); auto ]. *)
+(* exists m5. *)
+(* apply Zeq_mult_simpl with (c := Z_of_nat (Nat.div (Nat.lcm m1 n) n)). *)
+(* apply Compare.not_eq_sym; apply Zorder.Zlt_not_eq. *)
+(* replace 0%Z with (Z_of_nat 0); [ apply Znat.inj_lt | simpl in |- *; auto ]. *)
+(* cut (Nat.lcm m1 n = n * Nat.div (Nat.lcm m1 n) n :>nat). *)
+(* case (Nat.div (Nat.lcm m1 n) n); auto with arith. *)
+(* rewrite mult_comm; simpl in |- *; intros H6; Contradict H6. *)
+(* apply Compare.not_eq_sym; apply lt_O_neq; apply Nat.lcm_lt_O; auto. *)
+(* apply Nat.divides_Nat.div; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* rewrite (fun a l => Zmult_comm (exp2Z (tail l) a)). *)
+(* apply *)
+(*  Zplus_reg_l with (n := (Z_of_nat (Nat.div (Nat.lcm m1 n) m1) * exp2Z (tail l) b)%Z). *)
+(* rewrite H5; rewrite H3. *)
+(* cut (forall a b c d, (a * (b * c + d))%Z = (a * c * b + a * d)%Z); *)
+(*  [ intros H6; repeat rewrite H6 | intros; ring ]. *)
+(* cut (forall a b c d e, ((b * c + d + e) * a)%Z = (a * c * b + a * (d + e))%Z); *)
+(*  [ intros H7; repeat rewrite H7 | intros; ring ]. *)
+(* repeat rewrite <- Znat.inj_mult; *)
+(*  repeat rewrite (fun y z => mult_comm (Nat.div y z)); *)
+(*  repeat rewrite <- Nat.divides_Nat.div; auto. *)
+(* rewrite Znat.inj_mult. *)
+(* ring; auto. *)
+(* apply Nat.divides_Nat.lcm2; auto. *)
+(* apply Nat.divides_Nat.lcm1; auto. *)
+(* simpl in H4. *)
+(* intuition. *)
+(* Qed. *)
+Admitted.
+
 Theorem reduceEqCong_groundN :
  forall n m1 a b l,
  listCongP l ->

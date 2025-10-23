@@ -145,19 +145,19 @@ intros l'3 l'4 (H'13, (H'14, (H'15, H'16)))
 apply groundNL_groundNForm; auto.
 apply processList_groundN; auto.
 apply groundNL_app.
-apply groundNL_le with (n := pred n0); auto with arith.
-apply groundNL_le with (n := pred m); auto with arith.
+apply groundNL_le with (n := pred n0); auto; lia.
+apply groundNL_le with (n := pred m); auto; lia.
 apply groundNL2_app.
-apply groundNL2_le with (n := pred n0); auto with arith.
-apply groundNL2_le with (n := pred m); auto with arith.
+apply groundNL2_le with (n := pred n0); auto; lia.
+apply groundNL2_le with (n := pred m); auto; lia.
 apply groundNL2_app.
-apply groundNL2_le with (n := pred n0); auto with arith.
-apply groundNL2_le with (n := pred m); auto with arith.
+apply groundNL2_le with (n := pred n0); auto; lia.
+apply groundNL2_le with (n := pred m); auto; lia.
 apply groundNL2_app.
-apply groundNL2_le with (n := pred n0); auto with arith.
-apply groundNL2_le with (n := pred m); auto with arith.
+apply groundNL2_le with (n := pred n0); auto; lia.
+apply groundNL2_le with (n := pred m); auto; lia.
 intros a b H H0 H1 H2 n H3; inversion H3; auto.
-apply GNOr with (n := pred n0) (m := pred m); auto with arith.
+apply GNOr with (n := pred n0) (m := pred m); auto; lia.
 Qed.
  
 (** Elim all quantifiers  *) 

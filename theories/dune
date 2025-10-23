@@ -1,3 +1,4 @@
 (coq.theory
  (name Presburger)
+ (package presburger)
  (theories Stdlib))

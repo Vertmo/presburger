@@ -6,15 +6,17 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github vertmo/presburger))
 
-(authors "Author Name <author@example.com>")
+(authors "Hugo Herbelin"
+         "Maxime Dénès"
+         "Pierre-Marie Pédrot"
+         "Pierre Letouzey"
+         "Basile Pesin")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
+(maintainers "Basile Pesin <basile.pesin@vertmo.org>")
 
 (license LICENSE)
-
-(documentation https://url/to/documentation)
 
 (package
  (name presburger)
